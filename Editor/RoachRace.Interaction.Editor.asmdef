@@ -1,0 +1,18 @@
+{
+  "name": "RoachRace.Interaction.Editor",
+  "rootNamespace": "RoachRace.Interaction.Editor",
+  "references": [
+    "RoachRace.Interaction"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
