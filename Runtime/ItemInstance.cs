@@ -15,7 +15,7 @@ namespace RoachRace.Interaction
     /// - The inventory selects items by itemId; PlayerItemRegistry uses ItemInstance to find the matching RoachRaceItemComponent.
     /// - Having an ItemInstance child only means the character *can* use this item implementation.
     ///   For the item to actually appear in the inventory at runtime, it must be granted into slots
-    ///   (e.g., via NetworkPlayerInventory.initialItems or via pickups).
+    ///   (e.g., via an InventoryLoadout assigned on NetworkPlayerInventory or via pickups).
     /// - If itemComponent is not assigned, Awake will attempt to find it on the same GameObject.
     /// </summary>
     [DisallowMultipleComponent]
@@ -33,16 +33,15 @@ namespace RoachRace.Interaction
 
         private void Awake()
         {
-            if (itemComponent == null)
+            if (!TryGetComponent(out itemComponent))
             {
-                itemComponent = GetComponent<RoachRaceItemComponent>();
-            }
-
-            if (itemComponent == null)
-            {
-                Debug.LogError($"[{nameof(ItemInstance)}] ItemComponent is not assigned and no {nameof(RoachRaceItemComponent)} was found on '{gameObject.name}'.", gameObject);
-                throw new System.NullReferenceException($"[{nameof(ItemInstance)}] Missing RoachRaceItemComponent on '{gameObject.name}'.");
-            }
+                itemComponent = GetComponentInChildren<RoachRaceItemComponent>();
+                if (itemComponent == null)
+                {
+                    Debug.LogError($"[{nameof(ItemInstance)}] ItemComponent is not assigned and no {nameof(RoachRaceItemComponent)} was found on '{gameObject.name}'.", gameObject);
+                    throw new System.NullReferenceException($"[{nameof(ItemInstance)}] Missing RoachRaceItemComponent on '{gameObject.name}'.");
+                }
+            }            
         }
 
 #if UNITY_EDITOR

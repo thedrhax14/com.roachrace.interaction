@@ -20,9 +20,6 @@ namespace RoachRace.Interaction
         [Tooltip("Name displayed in UI (if you show names).")]
         public string displayName = "Item";
 
-        [Tooltip("If true, selecting this item should also immediately use it.")]
-        public bool useOnSelect;
-
         [Tooltip("Optional icons. UI can choose which to display based on role.")]
         public Sprite survivorIcon;
         public Sprite ghostIcon;
