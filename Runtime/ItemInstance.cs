@@ -18,37 +18,31 @@ namespace RoachRace.Interaction
     ///   (e.g., via an InventoryLoadout assigned on NetworkPlayerInventory or via pickups).
     /// - If itemComponent is not assigned, Awake will attempt to find it on the same GameObject.
     /// </summary>
-    [DisallowMultipleComponent]
+    [RequireComponent(typeof(RoachRaceItemComponent))]
     public sealed class ItemInstance : MonoBehaviour
     {
         [Tooltip("ItemDefinition asset that provides the item id and UI metadata.")]
         [SerializeField] private ItemDefinition definition;
-
-        [Tooltip("Concrete item logic component for this item. If omitted, will be auto-found on this GameObject in Awake.")]
         [SerializeField] private RoachRaceItemComponent itemComponent;
 
         public ushort ItemId => definition != null ? definition.id : (ushort)0;
         public ItemDefinition Definition => definition;
-        public RoachRaceItemComponent ItemComponent => itemComponent;
+        public RoachRaceItemComponent ItemComponent => itemComponent == null ? GetComponent<RoachRaceItemComponent>() : itemComponent;
 
-        private void Awake()
+        /// <summary>
+        /// Item component instance must assign itself here on initialization.
+        /// </summary>
+        /// <param name="component"></param>
+        public void SetItemComponent(RoachRaceItemComponent component)
         {
-            if (!TryGetComponent(out itemComponent))
-            {
-                itemComponent = GetComponentInChildren<RoachRaceItemComponent>();
-                if (itemComponent == null)
-                {
-                    Debug.LogError($"[{nameof(ItemInstance)}] ItemComponent is not assigned and no {nameof(RoachRaceItemComponent)} was found on '{gameObject.name}'.", gameObject);
-                    throw new System.NullReferenceException($"[{nameof(ItemInstance)}] Missing RoachRaceItemComponent on '{gameObject.name}'.");
-                }
-            }            
+            itemComponent = component;
         }
 
 #if UNITY_EDITOR
         void OnValidate()
         {
             if(definition == null) return;
-            gameObject.name = $"ItemInstance_{definition.displayName}_(id{definition.id})";
+            gameObject.name = $"item_{definition.id}_{definition.displayName.Trim().ToLowerInvariant().Replace(" ", "_")}";
         }
 #endif
     }

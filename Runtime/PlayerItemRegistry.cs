@@ -41,12 +41,20 @@ namespace RoachRace.Interaction
             }
         }
 
-        public bool TryGetItem(ushort itemId, out RoachRaceItemComponent item)
+        public bool TryGetItem(ushort itemId, out IRoachRaceItem item)
         {
             item = null;
             if (!_itemsById.TryGetValue(itemId, out var inst) || inst == null) return false;
             item = inst.ItemComponent;
             return item != null;
+        }
+
+        public bool TryGetItemInstance(ushort itemId, out ItemInstance instance)
+        {
+            instance = null;
+            if (!_itemsById.TryGetValue(itemId, out var inst) || inst == null) return false;
+            instance = inst;
+            return true;
         }
 
         public void SetOnlyActive(ushort itemId)

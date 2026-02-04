@@ -20,16 +20,22 @@ namespace RoachRace.Interaction
     public interface IRoachRaceItem
     {
         Transform UseSource { get; }
+        
 
         void InitializeUseContext(int seed, int instigatorId, bool isServer, GameObject instigatorObject);
 
+        void Equip();
         void OnEquipped();
-        float OnUnEquipped();
-
+        ItemInstance GetItemInstance();
+        Transform GetRightHandTarget();
+        Transform GetLeftHandTarget();
         void UseStart();
-        void UseStop();
 
-        void OnAim(bool isAiming);
+        void UseStop();
+        void Unequip();
+
+        void OnUnequipped();
+
         void SetVisibility(bool isVisible);
     }
 }

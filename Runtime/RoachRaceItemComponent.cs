@@ -1,7 +1,10 @@
 using UnityEngine;
+using KINEMATION.CharacterAnimationSystem.Scripts.Runtime.Playables;
+using KINEMATION.CharacterAnimationSystem.Scripts.Runtime.Core;
 
 namespace RoachRace.Interaction
 {
+    [RequireComponent(typeof(ItemInstance))]
     /// <summary>
     /// Base MonoBehaviour implementation of IRoachRaceItem.
     /// 
@@ -20,22 +23,58 @@ namespace RoachRace.Interaction
     {
         public abstract Transform UseSource { get; }
 
-        [Tooltip("Optional root GameObject for visual representation of this item. Used by SetVisibility.")]
-        public GameObject visualRoot;
+        public CharacterAnimationSettings animationSettings;
+        public Transform rightHandTarget;
+        public Transform leftHandTarget;
+        public AnimationAsset useAnimationAsset;
+        CharacterAnimationComponent characterAnimationComponent;
+        bool isEquipped = false;
+
+        void Awake()
+        {
+            GetComponent<ItemInstance>().SetItemComponent(this);
+            characterAnimationComponent = GetComponentInParent<CharacterAnimationComponent>();
+        }
 
         public abstract void InitializeUseContext(int seed, int instigatorId, bool isServer, GameObject instigatorObject);
 
-        public virtual void OnEquipped() { }
-        public virtual float OnUnEquipped() => 0f;
+        public virtual void Equip() { }
+        public virtual void OnEquipped() { 
+            isEquipped = true;
+        }
+        
+        public ItemInstance GetItemInstance()
+        {
+            return GetComponent<ItemInstance>();
+        }
 
-        public virtual void UseStart() { }
+        public virtual Transform GetRightHandTarget() { return rightHandTarget; }
+        public virtual Transform GetLeftHandTarget() { return leftHandTarget; }
+
+        public virtual void UseStart()
+        {
+            if(!isEquipped) return;
+               characterAnimationComponent.PlayAnimation(useAnimationAsset);
+        }
+
         public virtual void UseStop() { }
-
-        public virtual void OnAim(bool isAiming) { }
+        public virtual void Unequip() { }
+        public virtual void OnUnequipped()
+        {
+            isEquipped = false;
+        }
 
         public virtual void SetVisibility(bool isVisible) { 
-            if(visualRoot != null)
-                visualRoot.SetActive(isVisible);
+            Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+            foreach (var renderer in renderers)
+            {
+                renderer.enabled = isVisible;
+            }
+            Collider[] colliders = GetComponentsInChildren<Collider>(true);
+            foreach (var collider in colliders)
+            {
+                collider.enabled = isVisible;
+            }
         }
     }
 }
