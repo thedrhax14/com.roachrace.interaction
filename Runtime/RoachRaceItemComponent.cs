@@ -53,8 +53,7 @@ namespace RoachRace.Interaction
 
         public virtual void UseStart()
         {
-            if(!isEquipped) return;
-               characterAnimationComponent.PlayAnimation(useAnimationAsset);
+            characterAnimationComponent.PlayAnimation(useAnimationAsset);
         }
 
         public virtual void UseStop() { }
