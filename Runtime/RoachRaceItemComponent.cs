@@ -4,7 +4,6 @@ using KINEMATION.CharacterAnimationSystem.Scripts.Runtime.Core;
 
 namespace RoachRace.Interaction
 {
-    [RequireComponent(typeof(ItemInstance))]
     /// <summary>
     /// Base MonoBehaviour implementation of IRoachRaceItem.
     /// 

@@ -18,7 +18,6 @@ namespace RoachRace.Interaction
     ///   (e.g., via an InventoryLoadout assigned on NetworkPlayerInventory or via pickups).
     /// - If itemComponent is not assigned, Awake will attempt to find it on the same GameObject.
     /// </summary>
-    [RequireComponent(typeof(RoachRaceItemComponent))]
     public sealed class ItemInstance : MonoBehaviour
     {
         [Tooltip("ItemDefinition asset that provides the item id and UI metadata.")]
