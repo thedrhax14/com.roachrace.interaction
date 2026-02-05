@@ -1,4 +1,4 @@
-using FMODUnity;
+using System.Reflection;
 using UnityEngine;
 
 namespace RoachRace.Interaction
@@ -6,32 +6,30 @@ namespace RoachRace.Interaction
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
     /// <summary>
-    /// Plays impact feedback (particles + FMOD sound) when this Rigidbody collides with something.
+    /// Spawns an impact VFX/SFX prefab when this Rigidbody collides with something.
     /// 
     /// Intended setup (for designers):
     /// - Add this component to the MOVING object (the same GameObject that has the Rigidbody).
     /// - Make sure this object also has a Collider (or a Collider on a child) so Unity can generate collision events.
     /// - Do NOT add this to environment/static colliders; it is meant to live on the moving body.
+    /// - Create an "Impact Prefab" that contains your ParticleSystems and your sound.
+    ///   - For FMOD, the prefab can contain a Studio Event Emitter set to play on Awake/Enable.
     /// 
     /// How it decides to play:
     /// - Uses <see cref="Collision.relativeVelocity"/> magnitude as the "impact speed".
     /// - If impact speed is below <see cref="minimumImpactSpeed"/>, nothing plays.
     /// - <see cref="cooldownSeconds"/> prevents rapid re-triggers from multi-contact bounces.
     /// 
-    /// Particle orientation:
-    /// - Particles are spawned at the first contact point.
+    /// Spawn transform:
+    /// - The prefab is spawned at the first contact point.
     /// - Spawn rotation is built so that:
     ///   - Up direction = collision normal
     ///   - Forward direction = this Rigidbody's velocity direction at the time of impact
     /// - If velocity is nearly zero (or parallel to the normal), the script falls back to a stable forward direction.
     /// 
-    /// FMOD:
-    /// - Assign <see cref="impactEvent"/> to play a one-shot sound.
-    /// - By default the sound plays at the contact point; disable <see cref="playSoundAtContactPoint"/> to play at this object's position.
-    /// 
     /// Notes:
     /// - This reacts to collisions (not triggers). For trigger volumes you'd need a separate OnTrigger version.
-    /// - If the particle prefab loops, it will not be auto-destroyed (by design). Use a non-looping prefab for one-shot impacts.
+    /// - Use <see cref="destroySpawnedAfterSeconds"/> to auto-destroy the spawned prefab after a fixed time.
     /// </summary>
     public class CollisionImpactFeedback : MonoBehaviour
     {
@@ -44,19 +42,22 @@ namespace RoachRace.Interaction
         [Min(0f)]
         [SerializeField] private float cooldownSeconds = 0.05f;
 
-        [Header("Particles")]
-        [Tooltip("Optional particle prefab to spawn and play on impact.")]
-        [SerializeField] private ParticleSystem impactParticlesPrefab;
+        [Header("Spawn")]
+        [Tooltip("Prefab to spawn on impact (put your particles + sound on this prefab).")]
+        [SerializeField] private GameObject impactPrefab;
 
-        [Header("FMOD")]
-        [Tooltip("Optional FMOD event to play on impact.")]
-        [SerializeField] private EventReference impactEvent;
-
-        [Tooltip("If true, plays sound at the contact point; otherwise at this rigidbody position.")]
-        [SerializeField] private bool playSoundAtContactPoint = true;
+        [Tooltip("If > 0, destroys the spawned prefab instance after this many seconds.")]
+        [Min(0f)]
+        [SerializeField] private float destroySpawnedAfterSeconds = 3.0f;
 
         private Rigidbody _rigidbody;
         private float _lastPlayTime = -999f;
+
+        private static readonly PropertyInfo RigidbodyLinearVelocityProperty =
+            typeof(Rigidbody).GetProperty("linearVelocity", BindingFlags.Instance | BindingFlags.Public);
+
+        private static readonly PropertyInfo RigidbodyVelocityProperty =
+            typeof(Rigidbody).GetProperty("velocity", BindingFlags.Instance | BindingFlags.Public);
 
         private void Awake()
         {
@@ -93,7 +94,7 @@ namespace RoachRace.Interaction
             var up = contactNormal.sqrMagnitude > 0.0001f ? contactNormal.normalized : Vector3.up;
 
             // Forward should follow rigidbody velocity direction.
-            var velocity = _rigidbody.linearVelocity;
+            var velocity = GetRigidbodyVelocity(_rigidbody);
             var forward = velocity.sqrMagnitude > 0.0001f ? velocity.normalized : transform.forward;
 
             // If forward is nearly parallel to up, choose a stable tangent.
@@ -113,45 +114,36 @@ namespace RoachRace.Interaction
 
             var rotation = Quaternion.LookRotation(forward, up);
 
-            // Particles
-            if (impactParticlesPrefab != null)
+            if (impactPrefab != null)
             {
-                var instance = Instantiate(impactParticlesPrefab, contactPoint, rotation);
-                instance.Play(true);
+                var instance = Instantiate(impactPrefab, contactPoint, rotation);
 
-                if (!instance.main.loop)
+                if (destroySpawnedAfterSeconds > 0f)
                 {
-                    Destroy(instance.gameObject, GetAutoDestroySeconds(instance));
+                    Destroy(instance, destroySpawnedAfterSeconds);
                 }
-            }
-
-            // FMOD
-            if (!impactEvent.IsNull)
-            {
-                var soundPos = playSoundAtContactPoint ? contactPoint : transform.position;
-                RuntimeManager.PlayOneShot(impactEvent, soundPos);
             }
 
             _lastPlayTime = Time.time;
         }
 
-        private static float GetAutoDestroySeconds(ParticleSystem system)
+        private static Vector3 GetRigidbodyVelocity(Rigidbody rb)
         {
-            // Conservative lifetime estimation (duration + max startLifetime), with a small buffer.
-            var main = system.main;
-            var seconds = main.duration;
+            if (rb == null) return Vector3.zero;
 
-            seconds += main.startLifetime.mode switch
+            // Newer Unity versions: Rigidbody.linearVelocity
+            if (RigidbodyLinearVelocityProperty != null)
             {
-                ParticleSystemCurveMode.Constant => main.startLifetime.constant,
-                ParticleSystemCurveMode.TwoConstants => main.startLifetime.constantMax,
-                ParticleSystemCurveMode.Curve => main.startLifetime.constant,
-                ParticleSystemCurveMode.TwoCurves => main.startLifetime.constantMax,
-                _ => 0f,
-            };
+                return (Vector3)RigidbodyLinearVelocityProperty.GetValue(rb);
+            }
 
-            if (seconds < 0.1f) seconds = 0.1f;
-            return seconds + 0.5f;
+            // Older Unity versions: Rigidbody.velocity
+            if (RigidbodyVelocityProperty != null)
+            {
+                return (Vector3)RigidbodyVelocityProperty.GetValue(rb);
+            }
+
+            return Vector3.zero;
         }
     }
 }
