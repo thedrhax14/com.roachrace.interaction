@@ -3,6 +3,7 @@
     "rootNamespace": "RoachRace.Interaction",
     "references": [
         "RoachRace.Data",
+        "FMODUnity",
         "Unity.InputSystem",
         "CAS.Runtime",
         "CAS.Addons.FPS.Runtime"
