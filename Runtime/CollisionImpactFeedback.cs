@@ -45,6 +45,7 @@ namespace RoachRace.Interaction
         [Header("Spawn")]
         [Tooltip("Prefab to spawn on impact (put your particles + sound on this prefab).")]
         [SerializeField] private GameObject impactPrefab;
+        [SerializeField] private Vector3 spawnPositionOffset = Vector3.up;
 
         [Tooltip("If > 0, destroys the spawned prefab instance after this many seconds.")]
         [Min(0f)]
@@ -116,7 +117,7 @@ namespace RoachRace.Interaction
 
             if (impactPrefab != null)
             {
-                var instance = Instantiate(impactPrefab, contactPoint, rotation);
+                var instance = Instantiate(impactPrefab, contactPoint + spawnPositionOffset, rotation);
 
                 if (destroySpawnedAfterSeconds > 0f)
                 {
