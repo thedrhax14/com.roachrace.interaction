@@ -29,7 +29,7 @@ namespace RoachRace.Interaction
         CharacterAnimationComponent characterAnimationComponent;
         bool isEquipped = false;
 
-        void Awake()
+        protected virtual void Awake()
         {
             GetComponent<ItemInstance>().SetItemComponent(this);
             characterAnimationComponent = GetComponentInParent<CharacterAnimationComponent>();
@@ -52,6 +52,16 @@ namespace RoachRace.Interaction
 
         public virtual void UseStart()
         {
+            if(characterAnimationComponent == null)
+            {
+                Debug.LogError($"[RoachRaceItemComponent] No CharacterAnimationComponent found in parent hierarchy of {gameObject.name}. Please add one to the player GameObject.", gameObject);
+                return;
+            }
+            if(useAnimationAsset == null)
+            {
+                Debug.LogError($"[RoachRaceItemComponent] No use animation asset assigned on {gameObject.name}. Please assign one.", gameObject);
+                return;
+            }
             characterAnimationComponent.PlayAnimation(useAnimationAsset);
         }
 
