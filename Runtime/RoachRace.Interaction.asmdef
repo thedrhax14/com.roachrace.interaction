@@ -5,7 +5,8 @@
         "RoachRace.Data",
         "Unity.InputSystem",
         "CAS.Runtime",
-        "CAS.Addons.FPS.Runtime"
+        "CAS.Addons.FPS.Runtime",
+        "CAS.Examples.Scripts"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

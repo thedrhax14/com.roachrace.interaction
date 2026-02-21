@@ -25,6 +25,9 @@ namespace RoachRace.Interaction
     {
         private readonly Dictionary<ushort, ItemInstance> _itemsById = new();
 
+        private ushort _activeItemId;
+        private ItemInstance _activeInstance;
+
         private void Awake()
         {
             _itemsById.Clear();
@@ -39,6 +42,15 @@ namespace RoachRace.Interaction
 
                 _itemsById[id] = inst;
             }
+
+            _activeItemId = 0;
+            _activeInstance = null;
+        }
+
+        private static IRoachRaceItem GetItem(ItemInstance instance)
+        {
+            if (instance == null) return null;
+            return instance.ItemComponent;
         }
 
         public bool TryGetItem(ushort itemId, out IRoachRaceItem item)
@@ -59,23 +71,65 @@ namespace RoachRace.Interaction
 
         public void SetOnlyActive(ushort itemId)
         {
+            _itemsById.TryGetValue(itemId, out var nextInstance);
+
+            // No state change: only enforce visibility.
+            if (_activeInstance == nextInstance)
+            {
+                foreach (var kvp in _itemsById)
+                {
+                    bool shouldBeVisible = kvp.Key == itemId;
+                    var inst = kvp.Value;
+                    inst?.ItemComponent?.SetVisibility(shouldBeVisible);
+                }
+                return;
+            }
+
+            // Transition: unequip old while still visible.
+            var prevItem = GetItem(_activeInstance);
+            if (prevItem != null)
+            {
+                prevItem.Unequip();
+                prevItem.OnUnequipped();
+            }
+
+            // Apply visibility for all.
             foreach (var kvp in _itemsById)
             {
-                bool isActive = kvp.Key == itemId;
+                bool shouldBeVisible = kvp.Key == itemId;
                 var inst = kvp.Value;
-                if (inst?.ItemComponent != null)
-                    inst.ItemComponent.SetVisibility(isActive);
+                inst?.ItemComponent?.SetVisibility(shouldBeVisible);
             }
+
+            // Equip new after it has been made visible (important for items which SetActive(true/false)).
+            var nextItem = GetItem(nextInstance);
+            if (nextItem != null)
+            {
+                nextItem.Equip();
+                nextItem.OnEquipped();
+            }
+
+            _activeItemId = itemId;
+            _activeInstance = nextInstance;
         }
 
         public void HideAll()
         {
+            var prevItem = GetItem(_activeInstance);
+            if (prevItem != null)
+            {
+                prevItem.Unequip();
+                prevItem.OnUnequipped();
+            }
+
             foreach (var kvp in _itemsById)
             {
                 var inst = kvp.Value;
-                if (inst?.ItemComponent != null)
-                    inst.ItemComponent.SetVisibility(false);
+                inst?.ItemComponent?.SetVisibility(false);
             }
+
+            _activeItemId = 0;
+            _activeInstance = null;
         }
     }
 }
