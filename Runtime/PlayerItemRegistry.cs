@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using KINEMATION.CharacterAnimationSystem.Scripts.Runtime.Core;
 using UnityEngine;
 
 namespace RoachRace.Interaction
@@ -28,6 +29,8 @@ namespace RoachRace.Interaction
         private ushort _activeItemId;
         private ItemInstance _activeInstance;
 
+        public CharacterAnimationComponent _characterAnimation;
+
         private void Awake()
         {
             _itemsById.Clear();
@@ -45,6 +48,25 @@ namespace RoachRace.Interaction
 
             _activeItemId = 0;
             _activeInstance = null;
+        }
+
+        private void ApplyItemAnimationSettings(IRoachRaceItem item)
+        {
+            if (_characterAnimation == null) {
+                Debug.LogError($"[{nameof(PlayerItemRegistry)}] Cannot apply item animation settings because CharacterAnimationComponent reference is missing!", gameObject);
+                return;
+            }
+            if (item is RoachRaceItemComponent rrItem && rrItem.animationSettings != null)
+            {
+                if(rrItem.animationSettings == null) {
+                    Debug.LogError($"[{nameof(PlayerItemRegistry)}] Item {item} has no animation settings to apply.");
+                    return;
+                }
+                Debug.Log($"[{nameof(PlayerItemRegistry)}] Applying animation settings for item {item} to character animation.");
+                _characterAnimation.UpdateAnimationSettings(rrItem.animationSettings);
+                return;
+            }
+            Debug.Log($"[{nameof(PlayerItemRegistry)}] No animation settings found for item {item}.");
         }
 
         private static IRoachRaceItem GetItem(ItemInstance instance)
@@ -109,6 +131,8 @@ namespace RoachRace.Interaction
                 nextItem.OnEquipped();
             }
 
+            ApplyItemAnimationSettings(nextItem);
+
             _activeItemId = itemId;
             _activeInstance = nextInstance;
         }
@@ -127,6 +151,8 @@ namespace RoachRace.Interaction
                 var inst = kvp.Value;
                 inst?.ItemComponent?.SetVisibility(false);
             }
+
+            ApplyItemAnimationSettings(null);
 
             _activeItemId = 0;
             _activeInstance = null;
