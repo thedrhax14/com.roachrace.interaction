@@ -33,6 +33,14 @@ namespace RoachRace.Interaction
         [Tooltip("If true, using this item consumes one charge from the inventory stack.")]
         public bool consumesInventoryOnUse;
 
+        [Header("Inventory Rules")]
+        [Tooltip("If false, this item cannot be dropped from inventory.")]
+        public bool canDrop = true;
+
+        [Header("World")]
+        [Tooltip("Optional. Prefab to spawn in the world when this item is dropped. Must contain a FishNet NetworkObject + NetworkItemPickup.")]
+        public GameObject worldPickupPrefab;
+
         [Tooltip("Maximum stack size when stackable is true.")]
         [Min(1)] public int maxStack = 1;
 
