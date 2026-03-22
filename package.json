@@ -1,10 +1,15 @@
 {
   "name": "com.roachrace.interaction",
-  "version": "1.0.14",
+  "version": "1.1.0",
   "displayName": "RoachRace Interaction",
   "description": "Interaction system for RoachRace",
   "unity": "2021.3",
   "dependencies": {
+    "com": {
+      "roachrace": {
+        "data": "1.1.0"
+      }
+    },
     "com.roachrace.data": "1.0.0"
   }
 }
