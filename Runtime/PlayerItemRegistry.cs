@@ -52,10 +52,6 @@ namespace RoachRace.Interaction
 
         private void ApplyItemAnimationSettings(IRoachRaceItem item)
         {
-            if (_characterAnimation == null) {
-                Debug.LogError($"[{nameof(PlayerItemRegistry)}] Cannot apply item animation settings because CharacterAnimationComponent reference is missing!", gameObject);
-                return;
-            }
             if (item is RoachRaceItemComponent rrItem && rrItem.animationSettings != null)
             {
                 if(rrItem.animationSettings == null) {
@@ -63,6 +59,11 @@ namespace RoachRace.Interaction
                     return;
                 }
                 Debug.Log($"[{nameof(PlayerItemRegistry)}] Applying animation settings for item {item} to character animation.");
+                if (_characterAnimation == null) {
+                    Debug.LogError($"[{nameof(PlayerItemRegistry)}] Cannot apply item animation settings because CharacterAnimationComponent reference is missing!", gameObject);
+                } else {
+                    Debug.Log($"[{nameof(PlayerItemRegistry)}] Found CharacterAnimationComponent reference. Applying animation settings for item {item}.");
+                }
                 _characterAnimation.UpdateAnimationSettings(rrItem.animationSettings);
                 return;
             }
