@@ -30,7 +30,7 @@ namespace RoachRace.Interaction
     /// - Assign it on the <see cref="ItemDefinition"/> to control stacking, storage visibility, consumption, and drop rules without coupling the core item identity to the inventory system.<br/>
     ///<br/>
     /// Notes:<br/>
-    /// - These rules are optional; when missing, runtime code should fall back to safe defaults (visible slots, non-stackable, max stack 1, not consumed on use, droppable).<br/>
+    /// - These rules are optional; when missing, runtime code should fall back to safe defaults (visible slots, non-stackable, max stack 1, not consumed on use, droppable, remove from inventory when depleted).<br/>
     /// </summary>
     [CreateAssetMenu(menuName = "RoachRace/Items/Rules/Inventory Item Rules")]
     public sealed class InventoryItemRules : ScriptableObject
@@ -51,6 +51,9 @@ namespace RoachRace.Interaction
         [Tooltip("If false, this item cannot be dropped from inventory.")]
         public bool canDrop = true;
 
+        [Tooltip("If true, the inventory entry is removed when its count reaches 0. If false, the item id remains in the slot with a zero count.")]
+        public bool removeWhenDepleted = true;
+
         /// <summary>
         /// Returns where this item should be stored within the player's inventory.<br/>
         /// This defaults to <see cref="InventorySlotVisibility.VisibleSlots"/> when no override is authored.
@@ -62,5 +65,11 @@ namespace RoachRace.Interaction
         /// This protects against invalid authoring values.
         /// </summary>
         public int MaxStackClamped => Mathf.Max(1, maxStack);
+
+        /// <summary>
+        /// Returns true when the inventory entry should be cleared once its count reaches 0.<br/>
+        /// Typical usage: consumables should remove themselves when depleted, while persistent items such as keys or tool holders can keep their slot entry at zero.<br/>
+        /// </summary>
+        public bool RemovesInventoryWhenDepleted => removeWhenDepleted;
     }
 }

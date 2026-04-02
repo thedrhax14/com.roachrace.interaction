@@ -53,6 +53,12 @@ namespace RoachRace.Interaction
         public bool ConsumesInventoryOnUse => inventoryRules != null && inventoryRules.consumesInventoryOnUse;
 
         /// <summary>
+        /// Returns true when the inventory entry should be removed after its count reaches 0.<br/>
+        /// When <see cref="inventoryRules"/> is not assigned, defaults to <c>true</c> so depletion clears the slot as before.<br/>
+        /// </summary>
+        public bool RemovesInventoryWhenDepleted => inventoryRules == null || inventoryRules.RemovesInventoryWhenDepleted;
+
+        /// <summary>
         /// Returns true if this item may be dropped from inventory.<br/>
         /// When <see cref="inventoryRules"/> is not assigned, defaults to <c>true</c>.
         /// </summary>
