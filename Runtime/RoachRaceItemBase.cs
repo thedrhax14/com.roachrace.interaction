@@ -3,11 +3,12 @@ using UnityEngine;
 namespace RoachRace.Interaction
 {
     /// <summary>
-    /// Convenience base class for most items.
-    /// 
-    /// Provides:
-    /// - A configurable UseSource transform (ray origin / muzzle / hand).
-    /// - Stored use context (Seed, InstigatorId, IsServer, InstigatorObject) via InitializeUseContext.
+    /// Convenience base class for most items.<br>
+    /// <br>
+    /// Provides:<br>
+    /// - A configurable UseSource transform (ray origin / muzzle / hand).<br>
+    /// - Stored use context (Seed, InstigatorId, IsServer, InstigatorObject) via InitializeUseContext.<br>
+    /// - Optional per-instance use cooldown via CanUseNow / TryBeginUseCooldown / UseCooldownSeconds.<br>
     /// 
     /// Lifecycle note:
     /// - The current inventory pipeline assumes item GameObjects are present as children under the player prefab
@@ -32,8 +33,12 @@ namespace RoachRace.Interaction
     {
         [Tooltip("Optional. Source transform for aiming/raycasting/spawning. Defaults to this transform if not set.")]
         [SerializeField] protected Transform useSource;
+        [Tooltip("Optional. Minimum seconds between use attempts for this item instance. Set to 0 for no cooldown.")]
+        [SerializeField, Min(0f)] private float useCooldownSeconds;
         [Tooltip("Optional. Next item to use after using this item. Can be null.")]
         public RoachRaceItemBase[] nextItemsToUse;
+
+        private float _nextUseTime;
 
         protected int InstigatorId { get; private set; } = -1;
         protected bool IsServer { get; private set; }
@@ -41,6 +46,47 @@ namespace RoachRace.Interaction
         protected GameObject InstigatorObject { get; private set; }
 
         public override Transform UseSource => useSource != null ? useSource : transform;
+
+        /// <summary>
+        /// Returns whether this item instance can be used right now.<br>
+        /// <br>
+        /// Typical usage:<br>
+        /// - Inventory and gameplay code can query this before calling <see cref="UseStart"/>.<br>
+        /// - Returns <c>true</c> when cooldown is disabled or has elapsed.<br>
+        /// </summary>
+        public bool CanUseNow => useCooldownSeconds <= 0f || Time.time >= _nextUseTime;
+
+        /// <summary>
+        /// Attempts to start this item's cooldown window.<br>
+        /// <br>
+        /// Typical usage:<br>
+        /// - Call immediately before <see cref="UseStart"/> to consume the cooldown on the item instance.<br>
+        /// - Returns <c>false</c> when the item is still cooling down.<br>
+        /// </summary>
+        /// <returns><c>true</c> when the cooldown was started; otherwise <c>false</c>.</returns>
+        protected bool TryBeginUseCooldown()
+        {
+            if (!CanUseNow)
+                return false;
+
+            _nextUseTime = Time.time + useCooldownSeconds;
+            return true;
+        }
+
+        /// <summary>
+        /// Starts item use while honoring the per-instance cooldown window.<br>
+        /// <br>
+        /// Typical usage:<br>
+        /// - Called by inventory and observer playback code when the item is actually used.<br>
+        /// - If the cooldown is still active, this call does nothing.<br>
+        /// </summary>
+        public override void UseStart()
+        {
+            if (!TryBeginUseCooldown())
+                return;
+
+            base.UseStart();
+        }
 
         public override void InitializeUseContext(int seed, int instigatorId, bool isServer, GameObject instigatorObject)
         {

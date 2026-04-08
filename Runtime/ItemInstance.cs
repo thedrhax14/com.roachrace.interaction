@@ -42,6 +42,8 @@ namespace RoachRace.Interaction
         {
             if(definition == null) return;
             gameObject.name = $"item_{definition.id}_{definition.displayName.Trim().ToLowerInvariant().Replace(" ", "_")}";
+            if(!TryGetComponent(out itemComponent))
+                Debug.LogWarning($"[{nameof(ItemInstance)}] No RoachRaceItemComponent found on '{gameObject.name}'. Please add one to make this item usable.", gameObject);
         }
 #endif
     }
